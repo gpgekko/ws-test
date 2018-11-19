@@ -1,0 +1,108 @@
+@()
+
+@main("Welcome to Play") {
+   <h1>Welcome to Play!</h1>
+
+   <h2>Websocket</h2>
+   <script language="javascript" type="text/javascript">
+         var output;
+
+         function init()
+         {
+            output = document.getElementById("output");
+            testWebSocket("ws://127.0.0.1:9000/socket");
+
+            $("#good").on("click", evt => doSend("{\"type\":\"Message\",\"payload\":\"is this on\",\"id\":1}"));
+            $("#bad").on("click", evt => doSend("{\"type\":\"BrokenMessage\",\"payload\":\"is this on\",\"id\":1}"));
+            $("#disconnect").on("click", evt => websocket.close());
+
+            setInterval(checkSticky, 500);
+         }
+
+         function checkSticky()
+         {
+            var isScrolledToBottom = output.scrollHeight - output.clientHeight <= output.scrollTop + 30;
+
+            // scroll to bottom if isScrolledToBottom is true
+            if(isScrolledToBottom)
+            {
+               output.scrollTop = output.scrollHeight - output.clientHeight;
+            }
+         }
+
+         function testWebSocket(wsUri)
+         {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function(evt) { onOpen(evt) };
+            websocket.onclose = function(evt) { onClose(evt) };
+            websocket.onmessage = function(evt) { onMessage(evt) };
+            websocket.onerror = function(evt) { onError(evt) };
+         }
+
+         function onOpen(evt)
+         {
+            writeToScreen("CONNECTED");
+
+            $(output).next().find("button").prop("disabled", false);
+         }
+
+         function onClose(evt)
+         {
+            writeToScreen("DISCONNECTED");
+            $(output).next().find("button").prop("disabled", true);
+         }
+
+         function onMessage(evt)
+         {
+            writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
+         }
+
+         function onError(evt)
+         {
+            writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+         }
+
+         function doSend(message)
+         {
+            writeToScreen("SENT: " + message);
+            websocket.send(message);
+         }
+
+         function writeToScreen(message)
+         {
+            var pre = document.createElement("p");
+            pre.style.wordWrap = "break-word";
+            pre.innerHTML = message;
+            output.appendChild(pre);
+            checkSticky();
+         }
+
+         window.addEventListener("load", init, false);
+   </script>
+   <div id="output" style="display: inline-block;border: 1px solid gray;padding: 0 1rem;margin-bottom: 1rem;width: 60%;font-family: monospace;overflow: auto;max-height: 15rem;min-height: 8rem;"></div>
+   <ul style="
+      width: 100px;
+      display: inline-block;
+      list-style: none;
+      margin: 0;
+      vertical-align: top;
+   ">
+      <li style="
+         margin-bottom: 0.3rem;
+      "><button id="good" style="
+         height: 25px;
+         width: 100px;
+      ">ObtainLock</button></li>
+      <li style="
+         margin-bottom: 0.3rem;
+      "><button id="bad" style="
+         width: 100px;
+         height: 25px;
+      ">ReleaseLock</button></li>
+      <hr>
+      <li><button id="disconnect" style="
+         width: 100px;
+         height: 25px;
+      ">Disconnect</button></li>
+   </ul>
+}
